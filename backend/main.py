@@ -1,10 +1,15 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from backend.event_engine import detect_events
+import os
 
 app = FastAPI()
 
-# ✅ Serve generated images (VERY IMPORTANT)
+# ✅ IMPORTANT FIX (ADD THIS)
+if not os.path.exists("generated_cards"):
+    os.makedirs("generated_cards")
+
+# ✅ Serve images
 app.mount("/images", StaticFiles(directory="generated_cards"), name="images")
 
 
@@ -15,10 +20,11 @@ def home():
 
 @app.get("/run-events")
 def run_events():
-    events = detect_events()   # already handles everything
+    events = detect_events()
 
     return {
         "status": "success",
         "total": len(events),
         "events": events
     }
+
