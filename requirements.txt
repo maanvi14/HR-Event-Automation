@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+pandas
+pillow
+requests
+apscheduler
+python-multipart
+
