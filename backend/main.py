@@ -5,9 +5,8 @@ import os
 
 app = FastAPI()
 
-# ✅ IMPORTANT FIX (ADD THIS)
-if not os.path.exists("generated_cards"):
-    os.makedirs("generated_cards")
+# ✅ Ensure folder exists
+os.makedirs("generated_cards", exist_ok=True)
 
 # ✅ Serve images
 app.mount("/images", StaticFiles(directory="generated_cards"), name="images")
@@ -18,6 +17,7 @@ def home():
     return {"message": "KSAP HR Automation System Running"}
 
 
+# 🚨 THIS IS YOUR IMPORTANT ROUTE
 @app.get("/run-events")
 def run_events():
     events = detect_events()
@@ -28,3 +28,4 @@ def run_events():
         "events": events
     }
 
+    
