@@ -1,14 +1,13 @@
 import requests
 import os
 from PIL import Image
+from io import BytesIO
 
 
 def download_photo(url, name):
 
-    if not os.path.exists("photos"):
-        os.makedirs("photos")
-
-    path = f"photos/{name}.jpg"
+    os.makedirs("photos", exist_ok=True)
+    path = f"photos/{name}.png"
 
     try:
         session = requests.Session()
@@ -17,48 +16,42 @@ def download_photo(url, name):
             "User-Agent": "Mozilla/5.0"
         }
 
-        # 🔥 HANDLE GOOGLE DRIVE PROPERLY
+        # ================= GOOGLE DRIVE FIX =================
         if "drive.google.com" in url:
-            if "thumbnail" in url:
-                # already correct format
-                download_url = url
-            else:
-                file_id = url.split("id=")[-1]
-                download_url = f"https://drive.google.com/uc?export=download&id={file_id}"
+            file_id = url.split("id=")[-1].split("&")[0]
+            url = f"https://drive.google.com/uc?export=download&id={file_id}"
 
-            response = session.get(download_url, headers=headers, stream=True)
+        print("🌐 Fetching:", url)
 
-            # 🔥 Handle confirmation token (large files)
-            for key, value in response.cookies.items():
-                if key.startswith("download_warning"):
-                    download_url = f"{download_url}&confirm={value}"
-                    response = session.get(download_url, headers=headers, stream=True)
-                    break
-        else:
-            response = session.get(url, headers=headers, stream=True)
+        response = session.get(url, headers=headers, timeout=10)
 
-        # ❌ If request failed
+        print("STATUS:", response.status_code)
+        print("TYPE:", response.headers.get("Content-Type"))
+
         if response.status_code != 200:
-            raise Exception(f"Failed to fetch image. Status: {response.status_code}")
+            raise Exception("Failed to fetch image")
 
-        # 💾 Save file
-        with open(path, "wb") as f:
-            for chunk in response.iter_content(1024):
-                if chunk:
-                    f.write(chunk)
+        # ================= VALIDATE CONTENT =================
+        if "image" not in response.headers.get("Content-Type", ""):
+            raise Exception("Not an image (HTML or blocked content)")
 
-        # 🔥 CRITICAL: VALIDATE IMAGE
-        try:
-            img = Image.open(path)
-            img.verify()
-        except:
-            raise Exception("Downloaded file is NOT a valid image (Google returned HTML)")
+        # ================= LOAD IMAGE SAFELY =================
+        image = Image.open(BytesIO(response.content))
+        image = image.convert("RGB")
+        image.save(path, "PNG")
 
         print("✅ Photo saved:", path)
+        return path
 
     except Exception as e:
         print("❌ ERROR:", e)
-        raise e  # 🔥 important: fail fast
 
-    return path
+        # ================= FALLBACK (CRITICAL 🔥) =================
+        fallback_path = "templates/default_user.png"
 
+        if not os.path.exists(fallback_path):
+            raise Exception("Fallback image missing. Add templates/default_user.png")
+
+        print("⚠️ Using fallback image")
+
+        return fallback_path
