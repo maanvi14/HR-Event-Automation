@@ -4,9 +4,11 @@ import os
 
 # ================= FONT LOADER =================
 def load_font(size, bold=False):
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
     font_paths = [
-        "C:/Windows/Fonts/georgiab.ttf" if bold else "C:/Windows/Fonts/georgia.ttf",
-        "C:/Windows/Fonts/timesbd.ttf" if bold else "C:/Windows/Fonts/times.ttf"
+        os.path.join(BASE_DIR, "backend/fonts/Georgia-Bold.ttf") if bold else os.path.join(BASE_DIR, "backend/fonts/Georgia.ttf"),
+        os.path.join(BASE_DIR, "backend/fonts/Times-Bold.ttf") if bold else os.path.join(BASE_DIR, "backend/fonts/Times.ttf"),
     ]
 
     for path in font_paths:
@@ -14,6 +16,7 @@ def load_font(size, bold=False):
             return ImageFont.truetype(path, size)
 
     return ImageFont.load_default()
+
 
 
 # ================= TEXT WRAP =================
