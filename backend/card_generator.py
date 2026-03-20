@@ -183,3 +183,4 @@ def generate_card(name, message, photo_path, event_type, years=None):
     print("✅ Generated:", path)
 
     return path
+
