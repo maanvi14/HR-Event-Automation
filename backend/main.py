@@ -1,14 +1,17 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from backend.card_generator import generate_card
 from backend.photo_fetcher import download_photo
 import os
 
 app = FastAPI()
 
-# Ensure folders exist
+# ✅ Ensure folders exist
 os.makedirs("generated_cards", exist_ok=True)
 os.makedirs("photos", exist_ok=True)
+
+# ✅ Serve generated images publicly
+app.mount("/cards", StaticFiles(directory="generated_cards"), name="cards")
 
 
 @app.get("/")
@@ -47,9 +50,15 @@ async def generate_card_api(request: Request):
         )
         print("Output path:", output_path)
 
-        # Step 3: Return image
-        return FileResponse(output_path, media_type="image/png")
+        # Step 3: Return PUBLIC URL (IMPORTANT 🔥)
+        filename = os.path.basename(output_path)
+
+        return {
+            "image_url": f"https://hr-event-automation.onrender.com/cards/{filename}"
+        }
 
     except Exception as e:
         print("ERROR OCCURRED:", str(e))
         return {"error": str(e)}
+    
+    
