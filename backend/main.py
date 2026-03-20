@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
 from backend.card_generator import generate_card
 from backend.photo_fetcher import download_photo
@@ -6,7 +6,7 @@ import os
 
 app = FastAPI()
 
-# Ensure folders exist (for temporary usage)
+# Ensure folders exist
 os.makedirs("generated_cards", exist_ok=True)
 os.makedirs("photos", exist_ok=True)
 
@@ -18,22 +18,38 @@ def home():
 
 # 🔥 MAIN API USED BY n8n
 @app.post("/generate-card")
-def generate_card_api(data: dict):
-    name = data.get("name")
-    event_type = data.get("event_type")
-    photo_url = data.get("photo_url")
+async def generate_card_api(request: Request):
+    try:
+        data = await request.json()
 
-    # Step 1: Download photo
-    photo_path = download_photo(photo_url, name)
+        print("DATA RECEIVED:", data)
 
-    # Step 2: Generate card
-    output_path = generate_card(
-        name,
-        f"Happy {event_type}",
-        photo_path,
-        event_type
-    )
+        name = data.get("name")
+        event_type = data.get("event_type")
+        photo_url = data.get("photo_url")
 
-    # ✅ IMPORTANT: Return image directly (no storage dependency)
-    return FileResponse(output_path, media_type="image/png")
+        # ✅ Validate input
+        if not name or not event_type or not photo_url:
+            return {"error": "Missing required fields"}
 
+        print("Processing:", name, event_type, photo_url)
+
+        # Step 1: Download photo
+        photo_path = download_photo(photo_url, name)
+        print("Photo path:", photo_path)
+
+        # Step 2: Generate card
+        output_path = generate_card(
+            name,
+            f"Happy {event_type}",
+            photo_path,
+            event_type
+        )
+        print("Output path:", output_path)
+
+        # Step 3: Return image
+        return FileResponse(output_path, media_type="image/png")
+
+    except Exception as e:
+        print("ERROR OCCURRED:", str(e))
+        return {"error": str(e)}
