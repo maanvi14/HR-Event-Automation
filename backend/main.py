@@ -1,20 +1,22 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 from backend.card_generator import generate_card
 from backend.photo_fetcher import download_photo
 import os
 
 app = FastAPI()
 
-# ✅ Ensure folders exist (Render-safe)
+# ================= PATH SETUP (Render-safe) =================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 CARDS_DIR = os.path.join(BASE_DIR, "..", "generated_cards")
 PHOTOS_DIR = os.path.join(BASE_DIR, "..", "photos")
 
 os.makedirs(CARDS_DIR, exist_ok=True)
 os.makedirs(PHOTOS_DIR, exist_ok=True)
 
-# ✅ Serve generated images publicly
+# ================= STATIC FILE SERVING =================
 app.mount("/cards", StaticFiles(directory=CARDS_DIR), name="cards")
 
 
@@ -23,38 +25,45 @@ def home():
     return {"message": "HR Automation API Running 🚀"}
 
 
-# 🔥 MAIN API USED BY n8n
-@app.post("/generate-card")
-async def generate_card_api(request: Request):
-    try:
-        data = await request.json()
+# ================= REQUEST MODEL (IMPORTANT 🔥) =================
+class CardRequest(BaseModel):
+    name: str
+    event_type: str
+    photo_url: str
 
+
+# ================= MAIN API =================
+@app.post("/generate-card")
+async def generate_card_api(data: CardRequest):
+    try:
         print("📥 DATA RECEIVED:", data)
 
-        name = data.get("name")
-        event_type = data.get("event_type")
-        photo_url = data.get("photo_url")
+        name = data.name
+        event_type = data.event_type.lower().strip()
+        photo_url = data.photo_url
 
-        # ✅ Validate input
+        # ✅ Validation
         if not name or not event_type or not photo_url:
-            return {"error": "Missing required fields"}
+            return {"status": "error", "message": "Missing required fields"}
 
         print("⚙️ Processing:", name, event_type)
 
-        # Step 1: Download photo
+        # ================= STEP 1: DOWNLOAD =================
+        print("⬇️ Downloading image...")
         photo_path = download_photo(photo_url, name)
-        print("🖼️ Photo path:", photo_path)
+        print("🖼️ Photo saved at:", photo_path)
 
-        # Step 2: Generate card
+        # ================= STEP 2: GENERATE CARD =================
+        print("🎨 Generating card...")
         output_path = generate_card(
             name,
             f"Happy {event_type}",
             photo_path,
             event_type
         )
-        print("🎉 Card generated:", output_path)
+        print("🎉 Card generated at:", output_path)
 
-        # Step 3: Return PUBLIC URL
+        # ================= STEP 3: RETURN URL =================
         filename = os.path.basename(output_path)
 
         image_url = f"https://hr-event-automation.onrender.com/cards/{filename}"

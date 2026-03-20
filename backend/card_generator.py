@@ -4,18 +4,25 @@ import os
 
 # ================= FONT LOADER =================
 def load_font(size, bold=False):
-    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # backend folder
 
-    font_paths = [
-        os.path.join(BASE_DIR, "backend/fonts/Georgia-Bold.ttf") if bold else os.path.join(BASE_DIR, "backend/fonts/Georgia.ttf"),
-        os.path.join(BASE_DIR, "backend/fonts/Times-Bold.ttf") if bold else os.path.join(BASE_DIR, "backend/fonts/Times.ttf"),
-    ]
+    if bold:
+        font_paths = [
+            os.path.join(BASE_DIR, "fonts", "Georgia-Bold.ttf"),
+            os.path.join(BASE_DIR, "fonts", "Times-Bold.ttf")
+        ]
+    else:
+        font_paths = [
+            os.path.join(BASE_DIR, "fonts", "Georgia.ttf"),
+            os.path.join(BASE_DIR, "fonts", "Times.ttf")
+        ]
 
     for path in font_paths:
         if os.path.exists(path):
             return ImageFont.truetype(path, size)
 
     return ImageFont.load_default()
+
 
 
 
