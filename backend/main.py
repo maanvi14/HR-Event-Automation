@@ -1,31 +1,39 @@
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from backend.event_engine import detect_events
+from fastapi.responses import FileResponse
+from backend.card_generator import generate_card
+from backend.photo_fetcher import download_photo
 import os
 
 app = FastAPI()
 
-# ✅ Ensure folder exists
+# Ensure folders exist (for temporary usage)
 os.makedirs("generated_cards", exist_ok=True)
-
-# ✅ Serve images
-app.mount("/images", StaticFiles(directory="generated_cards"), name="images")
+os.makedirs("photos", exist_ok=True)
 
 
 @app.get("/")
 def home():
-    return {"message": "KSAP HR Automation System Running"}
+    return {"message": "HR Automation API Running 🚀"}
 
 
-# 🚨 THIS IS YOUR IMPORTANT ROUTE
-@app.get("/run-events")
-def run_events():
-    events = detect_events()
+# 🔥 MAIN API USED BY n8n
+@app.post("/generate-card")
+def generate_card_api(data: dict):
+    name = data.get("name")
+    event_type = data.get("event_type")
+    photo_url = data.get("photo_url")
 
-    return {
-        "status": "success",
-        "total": len(events),
-        "events": events
-    }
+    # Step 1: Download photo
+    photo_path = download_photo(photo_url, name)
 
-    
+    # Step 2: Generate card
+    output_path = generate_card(
+        name,
+        f"Happy {event_type}",
+        photo_path,
+        event_type
+    )
+
+    # ✅ IMPORTANT: Return image directly (no storage dependency)
+    return FileResponse(output_path, media_type="image/png")
+
