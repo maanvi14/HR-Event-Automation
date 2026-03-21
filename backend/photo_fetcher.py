@@ -13,13 +13,26 @@ def download_photo(url, name):
         headers = {"User-Agent": "Mozilla/5.0"}
 
         # ================= GOOGLE DRIVE FIX =================
+        file_id = None
+
+        # Case 1: Full Google Drive link
         if "drive.google.com" in url:
-            file_id = url.split("id=")[-1].split("&")[0]
+            if "id=" in url:
+                file_id = url.split("id=")[-1].split("&")[0]
+            elif "/d/" in url:
+                file_id = url.split("/d/")[1].split("/")[0]
+
+        # Case 2: Only file_id passed
+        elif len(url.strip()) < 50:
+            file_id = url.strip()
+
+        # Convert to direct download link
+        if file_id:
             url = f"https://drive.google.com/uc?export=download&id={file_id}"
 
         print("🌐 Fetching:", url)
 
-        response = session.get(url, headers=headers, timeout=10)
+        response = session.get(url, headers=headers, timeout=15)
 
         print("STATUS:", response.status_code)
         content_type = response.headers.get("Content-Type", "")
@@ -28,20 +41,24 @@ def download_photo(url, name):
         if response.status_code != 200:
             raise Exception("Failed to fetch image")
 
-        # ❗ STRICT CHECK
+        # ❗ STRICT VALIDATION
         if "image" not in content_type:
-            raise Exception("Response is not an image (likely HTML page)")
+            raise Exception("Response is not an image (likely HTML or permission issue)")
 
         # ================= LOAD IMAGE =================
         image = Image.open(BytesIO(response.content))
 
-        # ✅ detect format properly
+        # Detect format safely
         ext = image.format.lower() if image.format else "png"
+
+        # Normalize extension
+        if ext == "jpeg":
+            ext = "jpg"
 
         path = f"photos/{name}.{ext}"
 
-        # convert safely
-        if ext in ["jpeg", "jpg"]:
+        # Convert mode safely
+        if ext in ["jpg", "jpeg"]:
             image = image.convert("RGB")
         else:
             image = image.convert("RGBA")
@@ -54,13 +71,6 @@ def download_photo(url, name):
 
     except Exception as e:
         print("❌ ERROR:", e)
-
-        # ================= FALLBACK =================
-        fallback_path = "templates/default_user.png"
-
-        if not os.path.exists(fallback_path):
-            raise Exception("Fallback image missing. Add templates/default_user.png")
-
-        print("⚠️ Using fallback image")
-
-        return fallback_path
+        raise Exception("Image download failed - cannot generate card")
+    
+    
