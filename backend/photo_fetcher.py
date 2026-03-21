@@ -7,14 +7,10 @@ from io import BytesIO
 def download_photo(url, name):
 
     os.makedirs("photos", exist_ok=True)
-    path = f"photos/{name}.png"
 
     try:
         session = requests.Session()
-
-        headers = {
-            "User-Agent": "Mozilla/5.0"
-        }
+        headers = {"User-Agent": "Mozilla/5.0"}
 
         # ================= GOOGLE DRIVE FIX =================
         if "drive.google.com" in url:
@@ -26,27 +22,40 @@ def download_photo(url, name):
         response = session.get(url, headers=headers, timeout=10)
 
         print("STATUS:", response.status_code)
-        print("TYPE:", response.headers.get("Content-Type"))
+        content_type = response.headers.get("Content-Type", "")
+        print("TYPE:", content_type)
 
         if response.status_code != 200:
             raise Exception("Failed to fetch image")
 
-        # ================= VALIDATE CONTENT =================
-        if "image" not in response.headers.get("Content-Type", ""):
-            raise Exception("Not an image (HTML or blocked content)")
+        # ❗ STRICT CHECK
+        if "image" not in content_type:
+            raise Exception("Response is not an image (likely HTML page)")
 
-        # ================= LOAD IMAGE SAFELY =================
+        # ================= LOAD IMAGE =================
         image = Image.open(BytesIO(response.content))
-        image = image.convert("RGB")
-        image.save(path, "PNG")
+
+        # ✅ detect format properly
+        ext = image.format.lower() if image.format else "png"
+
+        path = f"photos/{name}.{ext}"
+
+        # convert safely
+        if ext in ["jpeg", "jpg"]:
+            image = image.convert("RGB")
+        else:
+            image = image.convert("RGBA")
+
+        image.save(path)
 
         print("✅ Photo saved:", path)
+
         return path
 
     except Exception as e:
         print("❌ ERROR:", e)
 
-        # ================= FALLBACK (CRITICAL 🔥) =================
+        # ================= FALLBACK =================
         fallback_path = "templates/default_user.png"
 
         if not os.path.exists(fallback_path):
