@@ -1,18 +1,12 @@
 import os
 from PIL import Image, ImageDraw, ImageFont
 
-# ================= UTILS =================
 def load_font(size, bold=False):
-    # Path relative to this file: backend/fonts/
     CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
     font_folder = os.path.join(CURRENT_DIR, "fonts")
-    
     font_name = "Georgia-Bold.ttf" if bold else "Georgia.ttf"
     path = os.path.join(font_folder, font_name)
-
-    if os.path.exists(path):
-        return ImageFont.truetype(path, size)
-    return ImageFont.load_default()
+    return ImageFont.truetype(path, size) if os.path.exists(path) else ImageFont.load_default()
 
 def wrap_text(draw, text, font, max_width):
     words = text.split()
@@ -27,11 +21,8 @@ def wrap_text(draw, text, font, max_width):
     if current: lines.append(current)
     return lines
 
-# ================= GENERATOR =================
 def generate_card(name, message, photo_path, event_type, years=None):
     event_type = event_type.lower().strip()
-    
-    # Path Setup
     BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
     PROJECT_ROOT = os.path.abspath(os.path.join(BACKEND_DIR, ".."))
 
@@ -56,24 +47,26 @@ def generate_card(name, message, photo_path, event_type, years=None):
     if not os.path.exists(template_path):
         raise Exception(f"Template missing: {template_path}")
 
-    # Load Images
-    template = Image.open(template_path).convert("RGBA")
-    photo = Image.open(photo_path).convert("RGBA")
+    # --- CRITICAL PHOTO LOADING FIX ---
+    try:
+        template = Image.open(template_path).convert("RGBA")
+        # photo_path is now the absolute path from photo_fetcher
+        photo = Image.open(photo_path).convert("RGBA")
+    except Exception as e:
+        raise Exception(f"Failed to open image file: {str(e)}")
+
     width, height = template.size
     draw = ImageDraw.Draw(template)
-
-    # Fonts
     name_font = load_font(int(width * 0.085), bold=True)
     msg_font = load_font(int(width * 0.034))
 
-    # Process Photo (Circle Crop)
+    # Circle Crop Photo
     cx, cy = width // 2, int(height * cfg["circle_cy_pct"])
     r = int(width * cfg["circle_r_pct"])
     size = r * 2
-
-    w, h = photo.size
-    m = min(w, h)
-    photo = photo.crop(((w-m)//2, (h-m)//2, (w+m)//2, (h+m)//2))
+    w_p, h_p = photo.size
+    m = min(w_p, h_p)
+    photo = photo.crop(((w_p-m)//2, (h_p-m)//2, (w_p+m)//2, (h_p+m)//2))
     photo = photo.resize((size, size), Image.LANCZOS)
 
     mask = Image.new("L", (size, size), 0)
@@ -82,13 +75,12 @@ def generate_card(name, message, photo_path, event_type, years=None):
     template.paste(photo, (cx - r, cy - r), photo)
     draw.ellipse((cx-r, cy-r, cx+r, cy+r), outline=cfg["border_color"], width=3)
 
-    # Text: Name
+    # Name and Message
     name_text = name.upper() if cfg["uppercase"] else name.title()
     nw = draw.textbbox((0, 0), name_text, font=name_font)[2]
     ny = int(height * cfg["name_y_pct"])
     draw.text(((width - nw)//2, ny), name_text, fill=cfg["name_color"], font=name_font)
 
-    # Text: Message
     lines = wrap_text(draw, message, msg_font, int(width * 0.75))
     my = ny + int(height * cfg["msg_gap"])
     for line in lines:
@@ -96,7 +88,6 @@ def generate_card(name, message, photo_path, event_type, years=None):
         draw.text(((width - mw)//2, my), line, fill=cfg["msg_color"], font=msg_font)
         my += int(height * 0.04)
 
-    # Final Save
     out_dir = os.path.join(PROJECT_ROOT, "generated_cards")
     os.makedirs(out_dir, exist_ok=True)
     out_path = os.path.join(out_dir, f"{name.replace(' ', '_')}_{event_type}.png")
