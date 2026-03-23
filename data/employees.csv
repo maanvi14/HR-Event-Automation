@@ -1,9 +1,9 @@
 employee_id,name,email,dob,joining_date,photo_link,department
-KSAP001,Maanvi Verma,maanviverma516@gmail.com,3/20/2006,2/2/2026,https://drive.google.com/thumbnail?id=15q-pHu9qn2b8smBEKNnGxIh6TCbeDURc&sz=w1000,Product Development
-KSAP002,Dinesh Kumar Nara,dinesh.test@ksaptech.com,5/10/1990,3/20/2019,https://drive.google.com/thumbnail?id=1Qh_6e52b8UNlJ2waPHNghl_GWof6VO2J&sz=w1000,Engineering
-KSAP003,Anjali Patel,anjali.test@ksaptech.com,8/12/1995,5/10/2021,https://drive.google.com/thumbnail?id=1Mx59qBaXvkZ41W-QMV2tqCewjpb54A_K&sz=w1000,Design
-KSAP004,Gopa Nair,gopa.test@ksaptech.com,11/21/1988,3/20/2020,https://drive.google.com/thumbnail?id=18J8MbZHoCZFo5MQy3TmdDJa9fIPtWWgW&sz=w1000,Operations
-KSAP005,Bandana Gogoi,bandana.test@ksaptech.com,4/15/1992,7/1/2022,https://drive.google.com/thumbnail?id=1Mx59qBaXvkZ41W-QMV2tqCewjpb54A_K&sz=w1000,Marketing
-KSAP006,Brian Hogue,brian.test@ksaptech.com,9/9/1985,3/20/2018,https://drive.google.com/thumbnail?id=18J8MbZHoCZFo5MQy3TmdDJa9fIPtWWgW&sz=w1000,Engineering
+KSAP001,Maanvi Verma,maanviverma516@gmail.com,3/21/2006,2/2/2026,15q-pHu9qn2b8smBEKNnGxIh6TCbeDURc,Product Development
+KSAP002,Dinesh Kumar Nara,dinesh.test@ksaptech.com,5/10/1990,3/21/2019,1Qh_6e52b8UNlJ2waPHNghl_GWof6VO2J,Engineering
+KSAP003,Anjali Patel,anjali.test@ksaptech.com,8/12/1995,5/10/2021,1Mx59qBaXvkZ41W-QMV2tqCewjpb54A_K,Design
+KSAP004,Gopa Nair,gopa.test@ksaptech.com,11/21/1988,3/21/2020,18J8MbZHoCZFo5MQy3TmdDJa9fIPtWWgW,Operations
+KSAP005,Bandana Gogoi,bandana.test@ksaptech.com,4/15/1992,7/1/2022,1Mx59qBaXvkZ41W-QMV2tqCewjpb54A_K,Marketing
+KSAP006,Brian Hogue,brian.test@ksaptech.com,9/9/1985,3/21/2018,18J8MbZHoCZFo5MQy3TmdDJa9fIPtWWgW,Engineering
 
 
